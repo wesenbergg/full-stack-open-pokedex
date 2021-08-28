@@ -5,6 +5,7 @@ import { act } from 'react-dom/test-utils'
 import '@testing-library/jest-dom/extend-expect'
 import App from '../src/App'
 
+
 jest.mock('axios')
 
 describe('<App />', () => {
