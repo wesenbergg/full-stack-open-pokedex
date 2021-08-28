@@ -31,6 +31,12 @@ jobs:
       #     heroku_api_key: ${{secrets.HEROKU_API_KEY}}
       #     heroku_app_name: "fsmooc-poke-dex-wesenbergg" # Must be unique in Heroku
       #     heroku_email: "jku.kukkonen123@gmail.com"
+      - name: Bump version and push tag
+        if: ${{ github.event_name == 'pull_request' }}
+        uses: anothrNick/github-tag-action@1.33.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DEFAULT_BUMP: patch
       - name: test
         run: npm run test 
       - name: e2e tests
