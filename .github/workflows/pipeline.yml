@@ -15,17 +15,19 @@ jobs:
       - uses: actions/setup-node@v1
         with:
           node-version: '12.x'
-      - uses: akhileshns/heroku-deploy@v3.12.12 # This is the action  
-        with:
-          heroku_api_key: ${{secrets.HEROKU_API_KEY}}
-          heroku_app_name: "fsmooc-poke-dex-wesenbergg" # Must be unique in Heroku
-          heroku_email: "jku.kukkonen123@gmail.com"
       - name: npm install 
         run: npm install  
       - name: lint
         run: npm run eslint
       - name: build
         run: npm run build
+      - name: heroku deploy
+        if: ${{ github.event_name == 'push' }}
+        uses: akhileshns/heroku-deploy@v3.11.10 # This is the action
+        with:
+          heroku_api_key: ${{secrets.HEROKU_API_KEY}}
+          heroku_app_name: "fsmooc-poke-dex-wesenbergg" # Must be unique in Heroku
+          heroku_email: "jku.kukkonen123@gmail.com"
       - name: test
         run: npm run test 
       - name: e2e tests
