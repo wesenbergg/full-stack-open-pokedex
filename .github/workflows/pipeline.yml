@@ -23,3 +23,5 @@ jobs:
         run: npm run build
       - name: test
         run: npm run test 
+      - name: test cypress
+        run: npm run cypress:open
