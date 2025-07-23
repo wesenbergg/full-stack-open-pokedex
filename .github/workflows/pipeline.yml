@@ -3,9 +3,9 @@ name: Deployment Pipeline
 on:
   push:
     branches:
-      - master
+      - main
   pull_request:
-    branches: [master]
+    branches: [main]
     types: [opened, synchronize]
 
 env:
@@ -14,35 +14,50 @@ env:
 jobs:
   simple_deployment_pipeline:
     runs-on: ubuntu-20.04
+    permissions:
+      contents: "read"
+      id-token: "write"
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: "20.x"
+          node-version: "20"
       - name: npm install
         run: npm install
       - name: lint
         run: npm run eslint
       - name: build
         run: npm run build
-      # - name: heroku deploy
-      #   if: ${{ github.event_name == 'push' && env.SKIP_DEPLOY == 'false' }}
-      #   uses: akhileshns/heroku-deploy@v3.11.10
-      #   with:
-      #     heroku_api_key: ${{secrets.HEROKU_API_KEY}}
-      #     heroku_app_name: "fsmooc-poke-dex-wesenbergg" # Must be unique in Heroku
-      #     heroku_email: "jku.kukkonen123@gmail.com"
+
+      - name: test
+        run: npm run test
+      - name: e2e tests
+        uses: cypress-io/github-action@v6
+        with:
+          command: npm run cypress:open
+          start: npm run start-prod
+          wait-on: http://localhost:5000
+
+  deploy:
+    needs: simple_deployment_pipeline
+    name: Deploy app to Fly.io
+    runs-on: ubuntu-20.04
+    concurrency: deploy-group # optional: ensure only one action runs at a time
+    steps:
+      - uses: actions/checkout@v4
+      - uses: superfly/flyctl-actions/setup-flyctl@master
+      - run: flyctl deploy --remote-only
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+
+  tag_release:
+    needs: deploy
+    name: Tag Release
+    runs-on: ubuntu-20.04
+    steps:
       - name: Bump version and push tag
         if: ${{ github.event_name == 'pull_request' && env.SKIP_DEPLOY == 'false' }}
         uses: anothrNick/github-tag-action@1.64.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           DEFAULT_BUMP: minor
-      - name: test
-        run: npm run test
-      - name: e2e tests
-        uses: cypress-io/github-action@v5
-        with:
-          command: npm run cypress:open
-          start: npm run start-prod
-          wait-on: http://localhost:5000
