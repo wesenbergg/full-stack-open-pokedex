@@ -8,6 +8,9 @@ on:
     branches: [master]
     types: [opened, synchronize]
 
+env:
+  SKIP_DEPLOY: ${{ contains(github.event.commits.*.message, '#skip') || contains(github.event.pull_request.title, '#skip') }}
+
 jobs:
   simple_deployment_pipeline:
     runs-on: ubuntu-20.04
@@ -23,18 +26,18 @@ jobs:
       - name: build
         run: npm run build
       # - name: heroku deploy
-      #   if: ${{ github.event_name == 'push' }}
+      #   if: ${{ github.event_name == 'push' && env.SKIP_DEPLOY == 'false' }}
       #   uses: akhileshns/heroku-deploy@v3.11.10
       #   with:
       #     heroku_api_key: ${{secrets.HEROKU_API_KEY}}
       #     heroku_app_name: "fsmooc-poke-dex-wesenbergg" # Must be unique in Heroku
       #     heroku_email: "jku.kukkonen123@gmail.com"
       - name: Bump version and push tag
-        if: ${{ github.event_name == 'pull_request' }}
+        if: ${{ github.event_name == 'pull_request' && env.SKIP_DEPLOY == 'false' }}
         uses: anothrNick/github-tag-action@1.64.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          DEFAULT_BUMP: patch
+          DEFAULT_BUMP: minor
       - name: test
         run: npm run test
       - name: e2e tests
